@@ -58,4 +58,4 @@ end
 
 gem "react_on_rails", "= 14.1"
 
-gem "shakapacker", "= 8.0"
+gem "shakapacker", "8.0.2"
