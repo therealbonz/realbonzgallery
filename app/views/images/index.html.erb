@@ -1,2 +1,11 @@
-<%= react_component("ImageUpload", { onUploadComplete: "refreshImages" }) %>
+<%= react_component(
+  'NavBar',
+  {
+    isAuthenticated: user_signed_in?,
+    signInPath: new_user_session_path, # Devise sign-in page path
+    signOutPath: destroy_user_session_path, # Devise sign-out action
+    homePath: root_path # Home page path
+  }
+) %>
+
 <%= react_component("Gallery") %>

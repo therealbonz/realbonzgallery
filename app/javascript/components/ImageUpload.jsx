@@ -1,56 +1,33 @@
 import React, { useState } from 'react';
-import { DndContext } from '@dnd-kit/core';
 
 const ImageUpload = ({ refreshGallery }) => {
-  const [selectedFile, setSelectedFile] = useState(null);
+  const [selectedFiles, setSelectedFiles] = useState([]);
   const [uploadStatus, setUploadStatus] = useState('');
-  const [previewUrl, setPreviewUrl] = useState(null);
-  const [isDragging, setIsDragging] = useState(false);
 
-  // Handle file selection
   const handleFileChange = (event) => {
-    const file = event.target.files[0];
-    processFile(file);
+    const files = Array.from(event.target.files);
+    setSelectedFiles((prevFiles) => [...prevFiles, ...files]);
   };
 
-  // Process file (from input or drag-and-drop)
-  const processFile = (file) => {
-    if (file) {
-      setSelectedFile(file);
-      const url = URL.createObjectURL(file);
-      setPreviewUrl(url);
-    }
-  };
-
-  // Handle drag over
-  const handleDragOver = (event) => {
-    event.preventDefault();
-    setIsDragging(true);
-  };
-
-  // Handle drag leave
-  const handleDragLeave = () => {
-    setIsDragging(false);
-  };
-
-  // Handle drop
   const handleDrop = (event) => {
     event.preventDefault();
-    setIsDragging(false);
-    const file = event.dataTransfer.files[0];
-    processFile(file);
+    const files = Array.from(event.dataTransfer.files);
+    setSelectedFiles((prevFiles) => [...prevFiles, ...files]);
   };
 
-  // Handle file upload
+  const handleRemoveFile = (index) => {
+    setSelectedFiles((prevFiles) => prevFiles.filter((_, i) => i !== index));
+  };
+
   const handleUpload = async () => {
-    if (!selectedFile) {
-      setUploadStatus('No file selected.');
+    if (selectedFiles.length === 0) {
+      setUploadStatus('No files selected.');
       return;
     }
 
     const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
     const formData = new FormData();
-    formData.append('image', selectedFile);
+    selectedFiles.forEach((file) => formData.append('images[]', file));
 
     try {
       const response = await fetch('/upload', {
@@ -63,14 +40,12 @@ const ImageUpload = ({ refreshGallery }) => {
 
       if (response.ok) {
         setUploadStatus('Upload successful!');
-        console.log('File uploaded successfully.');
-        // Refresh the gallery after a successful upload
+        setSelectedFiles([]);
         if (typeof refreshGallery === 'function') {
           refreshGallery();
         }
       } else {
         setUploadStatus('Upload failed.');
-        console.error('Upload error:', response.statusText);
       }
     } catch (error) {
       setUploadStatus('An error occurred during upload.');
@@ -79,63 +54,89 @@ const ImageUpload = ({ refreshGallery }) => {
   };
 
   return (
-    <DndContext onDragOver={handleDragOver} onDragEnd={handleDragLeave}>
-      <div style={{ maxWidth: '400px', margin: 'auto', textAlign: 'center' }}>
-        <h2>Image Upload</h2>
-
-        {/* Dropbox Area */}
-        <div
-          onDragOver={handleDragOver}
-          onDragLeave={handleDragLeave}
-          onDrop={handleDrop}
-          style={{
-            border: isDragging ? '2px dashed #007BFF' : '2px dashed #CCC',
-            borderRadius: '10px',
-            padding: '20px',
-            marginBottom: '20px',
-            backgroundColor: isDragging ? '#f0f8ff' : '#f9f9f9',
-            textAlign: 'center',
-            cursor: 'pointer',
-          }}
-        >
-          {previewUrl ? (
-            <img
-              src={previewUrl}
-              alt="Preview"
-              style={{ width: '100%', maxHeight: '200px', objectFit: 'cover' }}
-            />
-          ) : (
-            <p>Drag & drop an image here, or click to select a file.</p>
-          )}
-          <input
-            type="file"
-            accept="image/*"
-            onChange={handleFileChange}
-            style={{ display: 'none' }}
-            id="fileInput"
-          />
-          <label htmlFor="fileInput" style={{ cursor: 'pointer', color: '#007BFF' }}>
-            Browse Files
-          </label>
-        </div>
-
-        {/* Upload Button */}
-        <button
-          onClick={handleUpload}
-          style={{
-            padding: '10px 20px',
-            backgroundColor: '#007BFF',
-            color: '#FFF',
-            border: 'none',
-            borderRadius: '5px',
-            cursor: 'pointer',
-          }}
-        >
-          Upload
-        </button>
-        {uploadStatus && <p style={{ marginTop: '10px' }}>{uploadStatus}</p>}
+    <div style={{ maxWidth: '400px', margin: 'auto', textAlign: 'center' }}>
+      <h2>Image Upload</h2>
+      <div
+        onDragOver={(e) => e.preventDefault()}
+        onDrop={handleDrop}
+        style={{
+          border: '2px dashed #ccc',
+          borderRadius: '10px',
+          padding: '20px',
+          marginBottom: '20px',
+          backgroundColor: '#f9f9f9',
+          textAlign: 'center',
+          cursor: 'pointer',
+        }}
+      >
+        <p>Drag & drop images here, or click to select files.</p>
+        <input
+          type="file"
+          accept="image/*"
+          onChange={handleFileChange}
+          multiple
+          style={{ display: 'none' }}
+          id="fileInput"
+        />
+        <label htmlFor="fileInput" style={{ cursor: 'pointer', color: '#007BFF' }}>
+          Browse Files
+        </label>
       </div>
-    </DndContext>
+
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(100px, 1fr))',
+          gap: '10px',
+          marginBottom: '20px',
+        }}
+      >
+        {selectedFiles.map((file, index) => (
+          <div key={index} style={{ position: 'relative' }}>
+            <img
+              src={URL.createObjectURL(file)}
+              alt={`Preview ${index + 1}`}
+              style={{ width: '100%', height: 'auto', borderRadius: '5px' }}
+            />
+            <button
+              onClick={() => handleRemoveFile(index)}
+              style={{
+                position: 'absolute',
+                top: '5px',
+                right: '5px',
+                background: '#FF0000',
+                color: '#FFF',
+                border: 'none',
+                borderRadius: '50%',
+                width: '20px',
+                height: '20px',
+                cursor: 'pointer',
+                fontSize: '12px',
+                lineHeight: '18px',
+                textAlign: 'center',
+              }}
+            >
+              ×
+            </button>
+          </div>
+        ))}
+      </div>
+
+      <button
+        onClick={handleUpload}
+        style={{
+          padding: '10px 20px',
+          backgroundColor: '#007BFF',
+          color: '#FFF',
+          border: 'none',
+          borderRadius: '5px',
+          cursor: 'pointer',
+        }}
+      >
+        Upload
+      </button>
+      {uploadStatus && <p style={{ marginTop: '10px' }}>{uploadStatus}</p>}
+    </div>
   );
 };
 

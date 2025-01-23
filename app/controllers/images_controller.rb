@@ -3,19 +3,21 @@ class ImagesController < ApplicationController
     protect_from_forgery with: :exception
 
     def upload
-        uploaded_file = params[:image]
-    
-        if uploaded_file
-          image = Image.new
-          image.file.attach(uploaded_file) # Attach the uploaded file to the Image record
-    
-          if image.save
-            render json: { id: image.id, url: url_for(image.file) }, status: :ok
-          else
-            render json: { error: 'Failed to save image' }, status: :unprocessable_entity
+        if params[:images]
+          uploaded_images = []
+          params[:images].each do |uploaded_file|
+            image = Image.new
+            image.file.attach(uploaded_file) # Attach the file using Active Storage
+            if image.save
+              uploaded_images << { id: image.id, url: url_for(image.file) }
+            else
+              render json: { error: 'Failed to save some images' }, status: :unprocessable_entity
+              return
+            end
           end
+          render json: { images: uploaded_images }, status: :ok
         else
-          render json: { error: 'No file provided' }, status: :unprocessable_entity
+          render json: { error: 'No files provided' }, status: :unprocessable_entity
         end
       end
   def index
@@ -44,14 +46,14 @@ class ImagesController < ApplicationController
         end
       end
   
-    def destroy
-      @image.destroy
-  
-      respond_to do |format|
-        format.html { redirect_to images_path, notice: 'Image was successfully deleted.' }
-        format.json { head :no_content }
+      def destroy
+        image = Image.find(params[:id])
+        image.file.purge # For Active Storage
+        image.destroy
+        render json: { message: 'Image deleted successfully' }, status: :ok
+      rescue ActiveRecord::RecordNotFound
+        render json: { error: 'Image not found' }, status: :not_found
       end
-    end
   
     private
   
