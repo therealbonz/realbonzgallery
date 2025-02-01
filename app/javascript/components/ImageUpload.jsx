@@ -42,7 +42,7 @@ const ImageUpload = ({ refreshGallery }) => {
         setUploadStatus('Upload successful!');
         setSelectedFiles([]);
         if (typeof refreshGallery === 'function') {
-          refreshGallery();
+          refreshGallery(1); // Refresh gallery from page 1 to include the newly uploaded images
         }
       } else {
         setUploadStatus('Upload failed.');

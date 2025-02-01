@@ -66,3 +66,6 @@ gem 'foreman'
 
 gem 'passenger'
 
+gem 'will_paginate', '~> 3.0'
+gem 'devise_token_auth'
+gem 'rack-cors', '~> 2.0', '>= 2.0.2'

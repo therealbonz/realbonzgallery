@@ -4,20 +4,24 @@ import ImageUpload from './ImageUpload';
 const Gallery = () => {
   const [images, setImages] = useState([]);
   const [error, setError] = useState('');
+  const [currentPage, setCurrentPage] = useState(1); // Track the current page for pagination
+  const [totalPages, setTotalPages] = useState(1); // Track total pages for pagination
   const [selectedImage, setSelectedImage] = useState(null); // Track the selected image for popup
   const [isPopupOpen, setIsPopupOpen] = useState(false); // Track popup state
 
-  // Fetch images from the server
-  const fetchImages = async () => {
+  // Fetch images from the server with pagination support
+  const fetchImages = async (page = 1) => {
     try {
-      const response = await fetch('/gallery', {
+      const response = await fetch(`/gallery?page=${page}`, {
         headers: {
           Accept: 'application/json',
         },
       });
       if (response.ok) {
         const data = await response.json();
-        setImages(data.images);
+        setImages(data.images); // Set images for current page
+        setCurrentPage(page); // Update current page
+        setTotalPages(data.total_pages); // Set total pages from the server
       } else {
         setError('Failed to load images.');
       }
@@ -59,10 +63,17 @@ const Gallery = () => {
     setIsPopupOpen(false);
   };
 
-  // Fetch images on component mount
+  // Fetch images on component mount or when page changes
   useEffect(() => {
-    fetchImages();
-  }, []);
+    fetchImages(currentPage);
+  }, [currentPage]);
+
+  // Handle page change when clicking on pagination buttons
+  const handlePageChange = (newPage) => {
+    if (newPage >= 1 && newPage <= totalPages) {
+      fetchImages(newPage); // Fetch images for the new page
+    }
+  };
 
   return (
     <div style={{ maxWidth: '800px', margin: 'auto', textAlign: 'center' }}>
@@ -100,7 +111,40 @@ const Gallery = () => {
         )}
       </div>
 
-      {/* Popup */}
+      {/* Pagination Controls */}
+      <div style={{ marginTop: '20px' }}>
+        <button
+          onClick={() => handlePageChange(currentPage - 1)}
+          disabled={currentPage === 1}
+          style={{
+            padding: '10px 20px',
+            backgroundColor: '#007BFF',
+            color: '#FFF',
+            border: 'none',
+            borderRadius: '5px',
+            cursor: 'pointer',
+            marginRight: '10px',
+          }}
+        >
+          Previous
+        </button>
+        <button
+          onClick={() => handlePageChange(currentPage + 1)}
+          disabled={currentPage === totalPages}
+          style={{
+            padding: '10px 20px',
+            backgroundColor: '#007BFF',
+            color: '#FFF',
+            border: 'none',
+            borderRadius: '5px',
+            cursor: 'pointer',
+          }}
+        >
+          Next
+        </button>
+      </div>
+
+      {/* Popup for Image Preview and Deletion */}
       {isPopupOpen && selectedImage && (
         <div
           style={{

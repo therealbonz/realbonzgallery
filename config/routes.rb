@@ -1,9 +1,11 @@
 Rails.application.routes.draw do
-  devise_for :users
   get 'hello_world', to: 'hello_world#index'
   resources :images, only: [:index, :create, :show, :destroy]
   post 'upload', to: 'images#upload'
   get 'gallery', to: 'images#index'
+
+  devise_for :users
+
 
 
   # Define your application routes per the DSL in https://guides.rubyonrails.org/routing.html

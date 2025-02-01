@@ -25,13 +25,14 @@ const NavBar = ({ profileImage }) => {
 
 const StyledNavBar = styled.div`
   position: fixed;
-  bottom: 20px; /* Positions it at the bottom of the screen */
+  top: 0; /* Positions it at the top of the screen */
   left: 50%; /* Centers horizontally */
   transform: translateX(-50%);
   z-index: 1000; /* Ensures it floats above other components */
   display: flex;
   justify-content: center;
   align-items: center;
+  width: 100%; /* Ensures it spans the entire width */
 
   .nav-container {
     display: flex;
